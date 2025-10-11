@@ -1,6 +1,7 @@
 import logging
 from typing import Any, Dict
 
+from app.services.ingestion.pr_processor import process_pull_request
 from app.services.tasks.celery_app import celery_app
 
 
@@ -15,9 +16,6 @@ logger = logging.getLogger(__name__)
     retry_kwargs={"max_retries": 5},
 )
 def ingest_pull_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Placeholder ingestion task that will later orchestrate diff collection.
-    """
     pull_request = payload.get("pull_request", {})
     repository = payload.get("repository", {})
 
@@ -25,11 +23,16 @@ def ingest_pull_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
     repo_full_name = repository.get("full_name")
 
     logger.info(
-        "Ingestion task received pull request",
+        "Starting ingestion for pull request",
         extra={"repository": repo_full_name, "pr_number": pr_number, "delivery": payload.get("delivery_id")},
     )
 
-    return {"status": "received", "repository": repo_full_name, "pr_number": pr_number}
+    result = process_pull_request(payload)
+    logger.info(
+        "Completed ingestion for pull request",
+        extra={"repository": repo_full_name, "pr_number": pr_number, "commits": result["commit_count"], "files": result["file_count"]},
+    )
+    return {"status": "completed", **result}
 
 
 def enqueue_pull_request_ingestion(payload: Dict[str, Any]) -> None:

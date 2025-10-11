@@ -17,3 +17,9 @@ celery_app.conf.task_routes = {
 celery_app.conf.task_track_started = True
 celery_app.conf.worker_max_tasks_per_child = 100
 celery_app.conf.worker_prefetch_multiplier = 1
+
+# Ensure Celery loads task modules at startup.
+celery_app.autodiscover_tasks(["app.services.tasks"])
+
+# Explicit import to register tasks when the worker starts without autodiscovery.
+import app.services.tasks.ingestion  # noqa: E402,F401
