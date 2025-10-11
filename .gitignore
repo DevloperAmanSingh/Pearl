@@ -166,3 +166,7 @@ cython_debug/
 
 # macOS
 .DS_Store
+
+# Project specific
+docs/
+.docs/
