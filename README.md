@@ -25,3 +25,11 @@ Phase 1 focuses on building the ingestion and task orchestration layer for an AI
 ## Documentation
 
 - Phase plan: `docs/phase1_prd.md`
+
+## Testing
+
+Run unit tests after syncing dependencies:
+
+```bash
+uv run pytest
+```
