@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
+import sqlalchemy as sa
 from sqlmodel import Field, SQLModel
 
 
@@ -36,4 +37,9 @@ class PullRequestFile(SQLModel, table=True):
     deletions: int = 0
     changes: int = 0
     blob_sha: Optional[str] = None
+    blob_url: Optional[str] = None
+    raw_url: Optional[str] = None
+    contents_url: Optional[str] = None
+    patch_excerpt: Optional[str] = Field(default=None, sa_column=sa.Column(sa.Text))
+    size_category: str = Field(default="small", index=True)
     last_analyzed_commit_sha: Optional[str] = None
