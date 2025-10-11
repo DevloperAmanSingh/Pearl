@@ -688,9 +688,9 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "psycopg", extra = ["binary"] },
-    { name = "psycopg-binary" },
     { name = "pydantic-settings" },
     { name = "pygithub" },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dotenv" },
     { name = "redis" },
     { name = "sqlmodel" },
@@ -704,6 +704,7 @@ dev = [
     { name = "anyio" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
+    { name = "respx" },
     { name = "ruff" },
 ]
 
@@ -713,10 +714,10 @@ requires-dist = [
     { name = "celery", specifier = ">=5.4.0,<6.0" },
     { name = "fastapi", specifier = ">=0.111.0,<0.112.0" },
     { name = "httpx", specifier = ">=0.27.0,<0.28.0" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.1.20" },
-    { name = "psycopg-binary", specifier = ">=3.1.18,<3.2" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.1.20,<4.0" },
     { name = "pydantic-settings", specifier = ">=2.3.4,<3.0" },
     { name = "pygithub", specifier = ">=2.3.0,<3.0" },
+    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.8.0,<3.0" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2.0" },
     { name = "redis", specifier = ">=5.0.4,<6.0" },
     { name = "sqlmodel", specifier = ">=0.0.16,<0.0.17" },
@@ -730,6 +731,7 @@ dev = [
     { name = "anyio", specifier = ">=4.3.0,<5.0" },
     { name = "pytest", specifier = ">=8.2.1,<9.0" },
     { name = "pytest-asyncio", specifier = ">=0.23.6,<0.24.0" },
+    { name = "respx", specifier = ">=0.20.2,<0.21.0" },
     { name = "ruff", specifier = ">=0.4.2,<0.5.0" },
 ]
 
@@ -1143,6 +1145,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c9/74/b3ff8e6c8446842c3f5c837e9c3dfcfe2018ea6ecef224c710c85ef728f4/requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf", size = 134517, upload-time = "2025-08-18T20:46:02.573Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1e/db/4254e3eabe8020b458f1a747140d32277ec7a271daf1d235b70dc0b4e6e3/requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6", size = 64738, upload-time = "2025-08-18T20:46:00.542Z" },
+]
+
+[[package]]
+name = "respx"
+version = "0.20.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e6/0b/e0df26ea5c7145d95f1ab8ecb20f0778dd8af718e56747977dca9d28362a/respx-0.20.2.tar.gz", hash = "sha256:07cf4108b1c88b82010f67d3c831dae33a375c7b436e54d87737c7f9f99be643", size = 26080, upload-time = "2023-07-20T23:01:23.618Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/47/47/8c5a8b02c2144770fe353585b6db21e392c4318b8cff897738159feff562/respx-0.20.2-py2.py3-none-any.whl", hash = "sha256:ab8e1cf6da28a5b2dd883ea617f8130f77f676736e6e9e4a25817ad116a172c9", size = 22849, upload-time = "2023-07-20T23:01:21.994Z" },
 ]
 
 [[package]]
