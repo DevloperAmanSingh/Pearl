@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import httpx
 from sqlmodel import select
@@ -26,6 +26,49 @@ from app.services.github.auth import get_installation_token
 from app.services.github.client import get_github_client
 
 logger = logging.getLogger(__name__)
+
+PR_BODY_CHAR_LIMIT = 2000
+PR_SUMMARY_CHAR_LIMIT = 400
+
+
+def _normalize_newlines(value: str) -> str:
+    return "\n".join(line.rstrip() for line in value.splitlines())
+
+
+def _truncate_text(value: str, limit: int) -> str:
+    if len(value) <= limit:
+        return value
+    truncated = value[:limit].rsplit(" ", 1)[0].rstrip()
+    if not truncated:
+        truncated = value[:limit].rstrip()
+    return f"{truncated}…"
+
+
+def _prepare_pr_body(raw_body: str | None) -> str | None:
+    if not raw_body:
+        return None
+    cleaned = raw_body.strip()
+    if not cleaned:
+        return None
+    normalized = _normalize_newlines(cleaned)
+    if len(normalized) <= PR_BODY_CHAR_LIMIT:
+        return normalized
+    return _truncate_text(normalized, PR_BODY_CHAR_LIMIT)
+
+
+def _build_pr_summary(title: str | None, raw_body: str | None) -> str | None:
+    segments: List[str] = []
+    title = (title or "").strip()
+    if title:
+        segments.append(title)
+    if raw_body:
+        compact_body = " ".join(raw_body.split())
+        if compact_body:
+            segments.append(compact_body)
+    if not segments:
+        return None
+    combined = " — ".join(segments) if len(segments) > 1 else segments[0]
+    return _truncate_text(combined, PR_SUMMARY_CHAR_LIMIT)
 
 
 class ReviewEngine:
@@ -62,8 +105,42 @@ class ReviewEngine:
             try:
                 token_info = get_installation_token()
                 with get_github_client(token_info.token) as github:
+                    pr_details: Dict[str, Any] | None = None
+                    pr_body_excerpt: str | None = None
+                    pr_summary: str | None = None
+                    pr_title = pull_request.title
+                    try:
+                        pr_details = github.get_pull_request(pull_request.repository_full_name, pull_request.number)
+                    except httpx.HTTPStatusError as exc:
+                        logger.warning(
+                            "Failed to retrieve PR metadata",
+                            extra={
+                                "pull_request_id": pull_request.id,
+                                "status": exc.response.status_code,
+                            },
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        logger.warning(
+                            "Failed to retrieve PR metadata",
+                            extra={
+                                "pull_request_id": pull_request.id,
+                                "error": str(exc),
+                            },
+                        )
+                    else:
+                        pr_title = pr_details.get("title") or pr_title
+                        pr_body_excerpt = _prepare_pr_body(pr_details.get("body"))
+                        pr_summary = _build_pr_summary(pr_title, pr_details.get("body"))
+
                     findings, processed_files = self._process_files(
-                        session, analysis_run, pull_request, files, github
+                        session,
+                        analysis_run,
+                        pull_request,
+                        files,
+                        github,
+                        pr_title,
+                        pr_body_excerpt,
+                        pr_summary,
                     )
             except Exception as exc:  # noqa: BLE001 - we need to capture and persist failure state
                 logger.exception("Analysis failed", extra={"pull_request_id": pull_request_id})
@@ -85,7 +162,17 @@ class ReviewEngine:
                 "analysis_run_id": analysis_run.id,
             }
 
-    def _process_files(self, session, analysis_run, pull_request, files, github_client) -> tuple[List[PullRequestFinding], int]:
+    def _process_files(
+        self,
+        session,
+        analysis_run,
+        pull_request,
+        files,
+        github_client,
+        pr_title: str,
+        pr_body: str | None,
+        pr_summary: str | None,
+    ) -> tuple[List[PullRequestFinding], int]:
         findings: List[PullRequestFinding] = []
         processed_files = 0
 
@@ -121,6 +208,9 @@ class ReviewEngine:
                 pr_number=pull_request.number,
                 head_sha=pull_request.head_sha,
                 base_sha=pull_request.base_sha,
+                pull_request_title=pr_title,
+                pull_request_body=pr_body,
+                pull_request_summary=pr_summary,
                 file_path=file_record.filename,
                 diff_hunk=patch,
                 language=language,
